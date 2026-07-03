@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 // Claude The Wizard - plays the bundled spell sound when invoked.
-// Cross-platform, non-blocking, and fails silently so it never disrupts a session.
+// Blocks until playback finishes (run it from an `async` hook so it never
+// delays the session). Blocking matters: a detached player would be reaped
+// when the fast-returning hook process exits, cutting the sound off.
 //
 // Runtime controls (shared with wizard.mjs, effective immediately):
 //   ~/.claude/claude-the-wizard/disabled  -> presence silences the sound
 //   ~/.claude/claude-the-wizard/volume    -> integer 0-100
 // Env fallbacks: CLAUDE_WIZARD_ENABLED (off/false/0/no), CLAUDE_WIZARD_VOLUME (0-100).
 
-import { spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
@@ -41,19 +43,16 @@ function readVolume() {
 }
 const vol = Math.max(0, Math.min(100, readVolume()));
 
-// Spawn a detached, output-suppressed process so the caller returns immediately.
-function launch(cmd, args) {
+// Run a player and WAIT for it to finish, swallowing all errors/output.
+function play(cmd, args) {
   try {
-    const child = spawn(cmd, args, { stdio: "ignore", detached: true });
-    child.on("error", () => {});
-    child.unref();
-    return true;
+    const r = spawnSync(cmd, args, { stdio: "ignore" });
+    return !r.error && r.status === 0;
   } catch {
     return false;
   }
 }
 
-// Check whether a binary is on PATH (used on Linux to pick an available player).
 function has(bin) {
   const probe = process.platform === "win32" ? "where" : "which";
   try {
@@ -65,6 +64,7 @@ function has(bin) {
 
 if (process.platform === "win32") {
   // MCI (winmm.dll) reliably plays mp3 headless. Volume range is 0-1000.
+  // "play ... wait" blocks in PowerShell until the clip ends.
   const esc = sound.replace(/'/g, "''"); // safe inside a single-quoted PS string
   const mciVol = Math.round(vol * 10);
   const ps = [
@@ -75,9 +75,9 @@ if (process.platform === "win32") {
     "[Native.WinMM]::mciSendString('play claudecast wait', $null, 0, [IntPtr]::Zero) | Out-Null;",
     "[Native.WinMM]::mciSendString('close claudecast', $null, 0, [IntPtr]::Zero) | Out-Null;",
   ].join(" ");
-  launch("powershell", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
+  play("powershell", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps]);
 } else if (process.platform === "darwin") {
-  launch("afplay", ["-v", (vol / 100).toFixed(2), sound]);
+  play("afplay", ["-v", (vol / 100).toFixed(2), sound]);
 } else {
   // Linux/other: try common mp3-capable players in order, each with a volume flag.
   const mpg123Factor = String(Math.round((32768 * vol) / 100)); // -f scale, 32768 = 100%
@@ -88,6 +88,6 @@ if (process.platform === "win32") {
     ["cvlc", ["--play-and-exit", "--intf", "dummy", `--gain=${(vol / 100).toFixed(2)}`, sound]],
   ];
   for (const [bin, args] of players) {
-    if (has(bin) && launch(bin, args)) break;
+    if (has(bin) && play(bin, args)) break;
   }
 }

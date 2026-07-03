@@ -1,6 +1,6 @@
 {
   "name": "claude-the-wizard",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Plays a Wizard101 Leprechaun spell sound whenever Claude finishes a task.",
   "author": { "name": "Ahazael", "url": "https://github.com/Ahazael" },
   "homepage": "https://github.com/Ahazael/Claude-The-Wizard",
