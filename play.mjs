@@ -1,21 +1,45 @@
 #!/usr/bin/env node
 // Claude The Wizard - plays the bundled spell sound when invoked.
 // Cross-platform, non-blocking, and fails silently so it never disrupts a session.
-// Volume is configurable via the CLAUDE_WIZARD_VOLUME env var (0-100, default 40).
+//
+// Runtime controls (shared with wizard.mjs, effective immediately):
+//   ~/.claude/claude-the-wizard/disabled  -> presence silences the sound
+//   ~/.claude/claude-the-wizard/volume    -> integer 0-100
+// Env fallbacks: CLAUDE_WIZARD_ENABLED (off/false/0/no), CLAUDE_WIZARD_VOLUME (0-100).
 
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const sound = join(here, "sound.mp3");
 if (!existsSync(sound)) process.exit(0);
 
-// Clamp requested volume to 0-100; default to a gentle 40%.
-let vol = parseInt(process.env.CLAUDE_WIZARD_VOLUME ?? "", 10);
-if (!Number.isFinite(vol)) vol = 40;
-vol = Math.max(0, Math.min(100, vol));
+// Shared control directory (same for local and plugin installs).
+const controlDir = join(homedir(), ".claude", "claude-the-wizard");
+const disabledFile = join(controlDir, "disabled");
+const volumeFile = join(controlDir, "volume");
+
+// Disabled via marker file or env var? Stay silent.
+const envEnabled = (process.env.CLAUDE_WIZARD_ENABLED ?? "").trim().toLowerCase();
+if (existsSync(disabledFile) || ["0", "false", "no", "off"].includes(envEnabled)) {
+  process.exit(0);
+}
+
+// Volume precedence: control file > env var > default 40. Clamp to 0-100.
+function readVolume() {
+  try {
+    if (existsSync(volumeFile)) {
+      const n = parseInt(readFileSync(volumeFile, "utf8").trim(), 10);
+      if (Number.isFinite(n)) return n;
+    }
+  } catch {}
+  const e = parseInt(process.env.CLAUDE_WIZARD_VOLUME ?? "", 10);
+  return Number.isFinite(e) ? e : 40;
+}
+const vol = Math.max(0, Math.min(100, readVolume()));
 
 // Spawn a detached, output-suppressed process so the caller returns immediately.
 function launch(cmd, args) {

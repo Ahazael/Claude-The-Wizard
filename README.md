@@ -11,18 +11,31 @@ Cross-platform:
 - **macOS** — `afplay` (built in)
 - **Linux** — first available of `mpg123`, `ffplay`, `mpv`, `cvlc`
 
-## Volume
+## Controls
 
-Playback defaults to a gentle **40%**. Override it by setting the `CLAUDE_WIZARD_VOLUME`
-environment variable to any value from `0` to `100`:
+Once installed, four slash commands control the effect (state changes take effect
+immediately — no restart needed):
 
-```json
-{
-  "env": { "CLAUDE_WIZARD_VOLUME": "25" }
-}
+| Command | Does |
+| --- | --- |
+| `/claude-the-wizard:volume 25` | Set volume to 25% (0–100), plays a preview |
+| `/claude-the-wizard:off` | Mute the finish sound |
+| `/claude-the-wizard:on` | Re-enable it |
+| `/claude-the-wizard:status` | Show current enabled state + volume |
+
+Or drive it directly with the bundled CLI:
+
+```
+node /path/to/plugin/wizard.mjs volume 25
+node /path/to/plugin/wizard.mjs off
+node /path/to/plugin/wizard.mjs on
+node /path/to/plugin/wizard.mjs status
 ```
 
-(Add it to your `~/.claude/settings.json`, or export it in your shell.)
+State is stored in `~/.claude/claude-the-wizard/` (`volume` and `disabled` files),
+so it's shared across installs. Env-var fallbacks are also honored:
+`CLAUDE_WIZARD_VOLUME` (0–100, default `40`) and `CLAUDE_WIZARD_ENABLED`
+(`off`/`false`/`0` to mute). Playback defaults to a gentle **40%**.
 
 ## Install
 
