@@ -7,9 +7,22 @@ A tiny [Claude Code](https://claude.com/claude-code) plugin that plays a **Wizar
 It registers a `Stop` hook — the event Claude Code fires when Claude finishes responding — that plays the bundled `sound.mp3`. The player runs detached and non-blocking, so it never slows Claude down, and fails silently if no audio backend is available.
 
 Cross-platform:
-- **Windows** — .NET `MediaPlayer` via PowerShell (no extra install)
+- **Windows** — MCI via `winmm.dll` through PowerShell (no extra install)
 - **macOS** — `afplay` (built in)
 - **Linux** — first available of `mpg123`, `ffplay`, `mpv`, `cvlc`
+
+## Volume
+
+Playback defaults to a gentle **40%**. Override it by setting the `CLAUDE_WIZARD_VOLUME`
+environment variable to any value from `0` to `100`:
+
+```json
+{
+  "env": { "CLAUDE_WIZARD_VOLUME": "25" }
+}
+```
+
+(Add it to your `~/.claude/settings.json`, or export it in your shell.)
 
 ## Install
 
