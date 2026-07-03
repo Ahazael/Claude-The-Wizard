@@ -1,0 +1,10 @@
+{
+  "name": "claude-the-wizard",
+  "version": "1.0.0",
+  "description": "Plays a Wizard101 Leprechaun spell sound whenever Claude finishes a task.",
+  "author": { "name": "Ahazael", "url": "https://github.com/Ahazael" },
+  "homepage": "https://github.com/Ahazael/Claude-The-Wizard",
+  "license": "MIT",
+  "keywords": ["sound", "notification", "hook", "fun", "wizard101", "stop-hook"],
+  "hooks": "./hooks/hooks.json"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "claude-the-wizard",
+  "owner": { "name": "Ahazael", "url": "https://github.com/Ahazael" },
+  "plugins": [
+    {
+      "name": "claude-the-wizard",
+      "source": "./",
+      "description": "Plays a Wizard101 Leprechaun spell sound whenever Claude finishes a task."
+    }
+  ]
+}

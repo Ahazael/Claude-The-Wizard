@@ -1,0 +1,15 @@
+{
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "node",
+          "args": ["${CLAUDE_PLUGIN_ROOT}/play.mjs"],
+          "async": true,
+          "statusMessage": "Casting Leprechaun..."
+        }
+      ]
+    }
+  ]
+}
